@@ -19,7 +19,7 @@ from rdflib.tools.rdf2dot import rdf2dot
 def visualize(g):
     stream = io.StringIO()
     rdf2dot(g, stream, opts = {display})
-    dg = pydotplus.graph_from_dot_data(stream.getvalue
+    dg = pydotplus.graph_from_dot_data(stream.getvalue)
     dg.write_png("output.png")
 
 
