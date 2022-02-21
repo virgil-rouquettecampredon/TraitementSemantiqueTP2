@@ -52,8 +52,12 @@ if __name__ == '__main__':
     #getRelationTypes(gInter)
 
     intersection = existSame(s1, s2)
-    for s, p, o in g1.triples((None, None, "F22_Self-Contained_Expression")):
-        print(o.hasTitle)
+    #for s, p, o in g1.triples((None, None, "F22_Self-Contained_Expression")):
+        #print(o.hasTitle)
+
+    qres = g1.query("""SELECT ?x ?title WHERE { ?x a http://data.doremus.org/ontology#F22_Self-Contained_Expression ; http://erlangen-crm.org/current/P102_has_title ?title.}""")
+    for row in qres:
+        print(f"{row.x} knows {row.y}")
 
     #Save un RDF file
     #g.serialize(destination="tbl.ttl")
