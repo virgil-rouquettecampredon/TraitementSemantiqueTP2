@@ -28,23 +28,41 @@ if __name__ == '__main__':
     s1 = getRelationTypes(g1)
     s2 = getRelationTypes(g2)
 
-    knows_query = """
+    q1 = """
     PREFIX mus: <http://data.doremus.org/ontology#>
     PREFIX ecrm: <http://erlangen-crm.org/current/>
     PREFIX efrbroo: <http://erlangen-crm.org/efrbroo/>
     PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 
-    SELECT ?x ?y ?z
+    SELECT ?title
     WHERE {
-        ?x a mus:22_Self-Contained_Expression ;
+        ?x a efrbroo:F22_Self-Contained_Expression ;
         ecrm:P102_has_title ?title .
     }
     """
 
-    qres = g1.query(knows_query)
+    q2 = """
+    PREFIX mus: <http://data.doremus.org/ontology#>
+    PREFIX ecrm: <http://erlangen-crm.org/current/>
+    PREFIX efrbroo: <http://erlangen-crm.org/efrbroo/>
+    PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+
+    SELECT DISTINCT ?property
+    WHERE {
+        ?x a efrbroo:F22_Self-Contained_Expression ;
+        ?property ?title .
+    }
+    """
+
+    qres = g1.query(q1)
 
     for row in qres:
-        print(row)
+        print(f"{row.title}")
+
+    qres = g1.query(q2)
+
+    for row in qres:
+        print(f"{row.property}")
 
     # Intersection entre deux graphes
     gInter = g1 & g2
@@ -54,10 +72,6 @@ if __name__ == '__main__':
     intersection = existSame(s1, s2)
     #for s, p, o in g1.triples((None, None, "F22_Self-Contained_Expression")):
         #print(o.hasTitle)
-
-    qres = g1.query("""SELECT ?x ?title WHERE { ?x a http://data.doremus.org/ontology#F22_Self-Contained_Expression ; http://erlangen-crm.org/current/P102_has_title ?title.}""")
-    for row in qres:
-        print(f"{row.x} knows {row.y}")
 
     #Save un RDF file
     #g.serialize(destination="tbl.ttl")
