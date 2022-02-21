@@ -28,6 +28,24 @@ if __name__ == '__main__':
     s1 = getRelationTypes(g1)
     s2 = getRelationTypes(g2)
 
+    knows_query = """
+    PREFIX mus: <http://data.doremus.org/ontology#>
+    PREFIX ecrm: <http://erlangen-crm.org/current/>
+    PREFIX efrbroo: <http://erlangen-crm.org/efrbroo/>
+    PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+
+    SELECT ?x ?y ?z
+    WHERE {
+        ?x a mus:22_Self-Contained_Expression ;
+        ecrm:P102_has_title ?title .
+    }
+    """
+
+    qres = g1.query(knows_query)
+
+    for row in qres:
+        print(row)
+
     # Intersection entre deux graphes
     gInter = g1 & g2
     #print("Intersection : ")
