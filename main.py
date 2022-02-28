@@ -17,7 +17,7 @@ def existSame(s1, s2):
     return list(intersection)
 
 def getAllTypes(graph):
-    req = """  
+    req = """
             SELECT DISTINCT ?type
             WHERE {
                 ?s a ?type.
@@ -31,7 +31,7 @@ def getAllTypes(graph):
 
 def getAllGenres(graph):
     #Retourne tous les genres de tous les F22_Self-Contained_Expression du graph
-    req = """  
+    req = """
     PREFIX mus: <http://data.doremus.org/ontology#>
     PREFIX ecrm:  <http://erlangen-crm.org/current/>
     PREFIX efrbroo: <http://erlangen-crm.org/efrbroo/>
@@ -59,9 +59,53 @@ def getAllGenres(graph):
 
     print("Nombre genres : " + str(len(result)))
     for row in result:
-        print(row)
+        print(row.genre)
+        if(row.z):
+            print(str(row.z) + " (" + row.z.language + ")")
     return result
 
+def getAllNotes(graph):
+    print("Notes : ")
+    req = """
+    PREFIX mus: <http://data.doremus.org/ontology#>
+    PREFIX ecrm:  <http://erlangen-crm.org/current/>
+    PREFIX efrbroo: <http://erlangen-crm.org/efrbroo/>
+    PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+
+    SELECT DISTINCT ?note
+    WHERE {
+        ?x a efrbroo:F22_Self-Contained_Expression ;
+        ecrm:P3_has_note ?note .
+    }
+    """
+
+    result = graph.query(req)
+
+    for row in result:
+        print(str(row.note))
+        print(row.note.n3())
+    return result
+
+def getRefersTo(graph):
+    print("Refers to : ")
+    req = """
+    PREFIX mus: <http://data.doremus.org/ontology#>
+    PREFIX ecrm:  <http://erlangen-crm.org/current/>
+    PREFIX efrbroo: <http://erlangen-crm.org/efrbroo/>
+    PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+
+    SELECT DISTINCT ?refers
+    WHERE {
+        ?x a efrbroo:F22_Self-Contained_Expression ;
+        ecrm:P67_refers_to ?refers .
+    }
+    """
+
+    result = graph.query(req)
+
+    for row in result:
+        print(row)
+    return result
 
 if __name__ == '__main__':
     g1 = Graph()
@@ -101,7 +145,7 @@ if __name__ == '__main__':
     """
 
     q3 = """
-    
+
     """
 
     #qres = g1.query(q1)
@@ -111,8 +155,24 @@ if __name__ == '__main__':
 
     qres = g1.query(q2)
 
+    print("Graphe source.ttl : ")
     for row in qres:
         print(f"{row.property}")
+
+    qres = g2.query(q2)
+
+    print("Graphe target.ttl : ")
+    for row in qres:
+        print(f"{row.property}")
+
+    getAllGenres(g1)
+    getAllGenres(g2)
+
+    #getAllNotes(g1)
+    #getAllNotes(g2)
+
+    #getRefersTo(g1)
+    #getRefersTo(g2)
 
     # Intersection entre deux graphes
     #gInter = g1 & g2
@@ -123,9 +183,6 @@ if __name__ == '__main__':
 
     #getAllTypes(g1)
     #getAllTypes(g2)
-
-    getAllGenres(g1)
-    getAllGenres(g2)
 
     #for s, p, o in g1.triples((None, None, "F22_Self-Contained_Expression")):
         #print(o.hasTitle)
