@@ -1,111 +1,177 @@
 from rdflib import *
 
-def getRelationTypes(g):
-    result_set = []
 
-    # find all subjects of any type
-    for s, p, o in g.triples((None, RDF.type, None)):
-        #(f"{s} is a {o}")
-        result_set.append(o)
+class F22_Expression:
+    def getAllTitles(self, expression):
+        req = """
+            PREFIX mus: <http://data.doremus.org/ontology#>
+            PREFIX ecrm: <http://erlangen-crm.org/current/>
+            PREFIX efrbroo: <http://erlangen-crm.org/efrbroo/>
+            PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 
-    result_set = list(dict.fromkeys(result_set))
-
-    return result_set
-
-def existSame(s1, s2):
-    intersection = set(s1).intersection(s2)
-    return list(intersection)
-
-def getAllTypes(graph):
-    req = """
-            SELECT DISTINCT ?type
+            SELECT ?expression ?title
             WHERE {
-                ?s a ?type.
+                ?expression ecrm:P102_has_title ?title .
             }
-          """
-    result = graph.query(req)
-    print("Nombre types : " + str(len(result)))
-    for row in result:
-        print(row)
-    return result
+        """
 
-def getAllGenres(graph):
-    #Retourne tous les genres de tous les F22_Self-Contained_Expression du graph
+        qres = self.graph.query(req, initBindings={'expression' : expression})
+        result = []
+
+        for row in qres:
+            result.append(str(row.title))
+
+        return result;
+
+    def getAllGenres(self, expression):
+        req = """
+                    PREFIX mus: <http://data.doremus.org/ontology#>
+                    PREFIX ecrm: <http://erlangen-crm.org/current/>
+                    PREFIX efrbroo: <http://erlangen-crm.org/efrbroo/>
+                    PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+
+                    SELECT ?genre
+                    WHERE {
+                      ?expression mus:U12_has_genre ?genre .
+                      FILTER (isIRI(?genre))
+                    }
+                    
+                """
+
+        qres = self.graph.query(req, initBindings={'expression': expression})
+        result = []
+
+        for row in qres:
+            result.append(str(row.genre))
+
+        return result;
+
+    def getAllNotes(self, expression):
+        req = """
+                    PREFIX mus: <http://data.doremus.org/ontology#>
+                    PREFIX ecrm: <http://erlangen-crm.org/current/>
+                    PREFIX efrbroo: <http://erlangen-crm.org/efrbroo/>
+                    PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+
+                    SELECT ?expression ?note
+                    WHERE {
+                      ?expression ecrm:P3_has_note ?note .
+                    }
+                """
+
+        qres = self.graph.query(req, initBindings={'expression' : expression})
+        result = []
+
+        for row in qres:
+            result.append(str(row.note))
+
+        return result;
+
+
+
+    def getAllKey(self, expression):
+        req = """
+                    PREFIX mus: <http://data.doremus.org/ontology#>
+                    PREFIX ecrm: <http://erlangen-crm.org/current/>
+                    PREFIX efrbroo: <http://erlangen-crm.org/efrbroo/>
+                    PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+
+                    SELECT ?expression ?key
+                    WHERE {
+                      ?expression mus:U11_has_key ?key .
+                      FILTER (isIRI(?key))
+                    }
+                """
+
+        qres = self.graph.query(req, initBindings={'expression': expression})
+        result = []
+
+        for row in qres:
+            result.append(str(row.key))
+
+        return result;
+
+    def getAllOpus(self, expression):
+        req = """
+                    PREFIX mus: <http://data.doremus.org/ontology#>
+                    PREFIX ecrm: <http://erlangen-crm.org/current/>
+                    PREFIX efrbroo: <http://erlangen-crm.org/efrbroo/>
+                    PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+
+                    SELECT ?expression ?opus
+                    WHERE {
+                      ?expression mus:U17_has_opus_statement / mus:U42_has_opus_number ?opus .
+                      
+                    }
+                """
+
+        qres = self.graph.query(req, initBindings={'expression': expression})
+        result = []
+
+        for row in qres:
+            result.append(str(row.opus))
+
+        return result;
+
+    def getAllComposer(self, expression):
+        req = """
+                    PREFIX mus: <http://data.doremus.org/ontology#>
+                    PREFIX ecrm: <http://erlangen-crm.org/current/>
+                    PREFIX efrbroo: <http://erlangen-crm.org/efrbroo/>
+                    PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+
+                    SELECT ?expression ?composer
+                    WHERE {
+                      ?expression a efrbroo:F22_Self-Contained_Expression .
+                      ?expCreation efrbroo:R17_created ?expression ;
+                        ecrm:P9_consists_of / ecrm:P14_carried_out_by ?composer ;
+
+                    }
+                """
+
+        qres = self.graph.query(req, initBindings={'expression': expression})
+        result = []
+
+        for row in qres:
+            result.append(str(row.composer))
+
+        return result;
+
+    def __init__(self, graph, expression):
+        self.graph = graph
+
+        self.expression = expression
+        self.title = self.getAllTitles(expression)
+        self.note = self.getAllNotes(expression)
+        self.composer = self.getAllComposer(expression)
+        self.key = self.getAllKey(expression)
+        self.opus = self.getAllOpus(expression)
+        self.genre = self.getAllGenres(expression)
+
+    def __str__(self):
+        return "Expression : " + str(self.expression) + "\n\tTitle : " + str(self.title) + "\n\tGenre : " + str(self.genre) \
+               + "\n\tNotes : " + str(self.note) +"\n\tComposer : " + str(self.composer) \
+               + "\n\tKey : " + str(self.key) + "\n\tOpus : " + str(self.opus)
+
+
+def getAllExpressions(graph):
+    print("Lecture d'un fichier ttl : ")
     req = """
-    PREFIX mus: <http://data.doremus.org/ontology#>
-    PREFIX ecrm:  <http://erlangen-crm.org/current/>
-    PREFIX efrbroo: <http://erlangen-crm.org/efrbroo/>
-    PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+            PREFIX mus: <http://data.doremus.org/ontology#>
+            PREFIX ecrm: <http://erlangen-crm.org/current/>
+            PREFIX efrbroo: <http://erlangen-crm.org/efrbroo/>
+            PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 
-    SELECT DISTINCT ?genre ?z
-    WHERE {
-        ?x a efrbroo:F22_Self-Contained_Expression ;
-        mus:U12_has_genre ?genre .
-        OPTIONAL {
-            SELECT ?genre ?z
+            SELECT DISTINCT ?expression
             WHERE {
-                ?genre a mus:M5_Genre ;
-                ecrm:P1_is_identified_by ?z;
+              ?expression a efrbroo:F22_Self-Contained_Expression .
             }
-        }
-    }
-    """
+            """
 
-    #mus:U12_has_genre [ a mus:M5_Genre ;
-    #                      ecrm:P1_is_identified_by  "musique contemporaine"@fr
-    #                  ] ;
+    qres = graph.query(req)
+    print(str(len(qres)))
 
-    result = graph.query(req)
-
-    print("Nombre genres : " + str(len(result)))
-    for row in result:
-        print(row.genre)
-        if(row.z):
-            print(str(row.z) + " (" + row.z.language + ")")
-    return result
-
-def getAllNotes(graph):
-    print("Notes : ")
-    req = """
-    PREFIX mus: <http://data.doremus.org/ontology#>
-    PREFIX ecrm:  <http://erlangen-crm.org/current/>
-    PREFIX efrbroo: <http://erlangen-crm.org/efrbroo/>
-    PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-
-    SELECT DISTINCT ?note
-    WHERE {
-        ?x a efrbroo:F22_Self-Contained_Expression ;
-        ecrm:P3_has_note ?note .
-    }
-    """
-
-    result = graph.query(req)
-
-    for row in result:
-        print(str(row.note))
-        print(row.note.n3())
-    return result
-
-def getRefersTo(graph):
-    print("Refers to : ")
-    req = """
-    PREFIX mus: <http://data.doremus.org/ontology#>
-    PREFIX ecrm:  <http://erlangen-crm.org/current/>
-    PREFIX efrbroo: <http://erlangen-crm.org/efrbroo/>
-    PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-
-    SELECT DISTINCT ?refers
-    WHERE {
-        ?x a efrbroo:F22_Self-Contained_Expression ;
-        ecrm:P67_refers_to ?refers .
-    }
-    """
-
-    result = graph.query(req)
-
-    for row in result:
-        print(row)
-    return result
+    return qres
 
 
 if __name__ == '__main__':
@@ -113,80 +179,14 @@ if __name__ == '__main__':
     g2 = Graph()
     g1.parse("./source.ttl")
     g2.parse("./target.ttl")
-    print(len(g1))
-    print(len(g2))
-    s1 = getRelationTypes(g1)
-    s2 = getRelationTypes(g2)
 
-    q1 = """
-    PREFIX mus: <http://data.doremus.org/ontology#>
-    PREFIX ecrm: <http://erlangen-crm.org/current/>
-    PREFIX efrbroo: <http://erlangen-crm.org/efrbroo/>
-    PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+    result = getAllExpressions(g1)
+    result2 = getAllExpressions(g2)
 
-    SELECT ?title
-    WHERE {
-        ?x a efrbroo:F22_Self-Contained_Expression ;
-        ecrm:P102_has_title ?title .
-    }
-    """
+    for row in result:
+        a = F22_Expression(g1, row[0])
+        print(str(a))
 
-    #Obtenir Toutes les propriétés d'un type efrbroo:F22_Self-Contained_Expression
-    q2 = """
-    PREFIX mus: <http://data.doremus.org/ontology#>
-    PREFIX ecrm: <http://erlangen-crm.org/current/>
-    PREFIX efrbroo: <http://erlangen-crm.org/efrbroo/>
-    PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-
-    SELECT DISTINCT ?property
-    WHERE {
-        ?x a efrbroo:F22_Self-Contained_Expression ;
-        ?property ?title .
-    }
-    """
-
-    q3 = """
-
-    """
-
-    #qres = g1.query(q1)
-
-    #for row in qres:
-    #    print(f"{row.title}")
-
-    qres = g1.query(q2)
-
-    print("Graphe source.ttl : ")
-    for row in qres:
-        print(f"{row.property}")
-
-    qres = g2.query(q2)
-
-    print("Graphe target.ttl : ")
-    for row in qres:
-        print(f"{row.property}")
-
-    getAllGenres(g1)
-    getAllGenres(g2)
-
-    #getAllNotes(g1)
-    #getAllNotes(g2)
-
-    #getRefersTo(g1)
-    #getRefersTo(g2)
-
-    # Intersection entre deux graphes
-    #gInter = g1 & g2
-    #print("Intersection : ")
-    #getRelationTypes(gInter)
-
-    #intersection = existSame(s1, s2)
-
-    #getAllTypes(g1)
-    #getAllTypes(g2)
-
-    #for s, p, o in g1.triples((None, None, "F22_Self-Contained_Expression")):
-        #print(o.hasTitle)
-
-    #Save un RDF file
-    #g.serialize(destination="tbl.ttl")
+    for row in result2:
+        a = F22_Expression(g2, row[0])
+        print(str(a))
