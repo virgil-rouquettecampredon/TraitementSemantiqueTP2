@@ -86,6 +86,34 @@ def getAllNotes(graph):
         print(row.note.n3())
     return result
 
+def getCasting(graph):
+    print("Casting : ")
+    req = """
+        PREFIX mus: <http://data.doremus.org/ontology#>
+        PREFIX ecrm:  <http://erlangen-crm.org/current/>
+        PREFIX efrbroo: <http://erlangen-crm.org/efrbroo/>
+        PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+
+        SELECT DISTINCT ?property
+        WHERE {
+            ?x a efrbroo:F22_Self-Contained_Expression ;
+            mus:U13_has_casting ?casting .
+            {
+                SELECT ?casting ?property ?title
+                WHERE {
+                       ?casting a mus:M6_Casting ;
+                       ?property ?title . 
+                }
+            }
+        }
+        """
+
+    result = graph.query(req)
+
+    for row in result:
+        print(str(row.property))
+    return result
+
 def getRefersTo(graph):
     print("Refers to : ")
     req = """
@@ -106,7 +134,6 @@ def getRefersTo(graph):
     for row in result:
         print(row)
     return result
-
 
 if __name__ == '__main__':
     g1 = Graph()
@@ -146,14 +173,29 @@ if __name__ == '__main__':
     """
 
     q3 = """
+        PREFIX mus: <http://data.doremus.org/ontology#>
+        PREFIX ecrm: <http://erlangen-crm.org/current/>
+        PREFIX efrbroo: <http://erlangen-crm.org/efrbroo/>
+        PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 
+        SELECT DISTINCT ?expression ?name ?expCreation
+        WHERE {
+          ?expression a efrbroo:F22_Self-Contained_Expression ;
+            ecrm:P102_has_title ?title .
+          ?expCreation efrbroo:R17_created ?expression ;
+            ecrm:P9_consists_of / ecrm:P14_carried_out_by ?composer .
+        }
     """
+
+    qres = g1.query(q3)
+    for row in qres:
+        print(row)
 
     #qres = g1.query(q1)
 
     #for row in qres:
     #    print(f"{row.title}")
-
+    """
     qres = g1.query(q2)
 
     print("Graphe source.ttl : ")
@@ -166,8 +208,12 @@ if __name__ == '__main__':
     for row in qres:
         print(f"{row.property}")
 
-    getAllGenres(g1)
-    getAllGenres(g2)
+    """
+    #getCasting(g1)
+    #getCasting(g2)
+
+    #getAllGenres(g1)
+    #getAllGenres(g2)
 
     #getAllNotes(g1)
     #getAllNotes(g2)
