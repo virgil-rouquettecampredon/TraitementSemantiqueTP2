@@ -6,7 +6,6 @@ import spacy
 nlp = spacy.load("fr_core_news_sm")
 
 
-
 def identityEqualMeasure(s1, s2):
     return s1 == s2
 
@@ -58,17 +57,48 @@ def synonymity(s1, s2):
     # TODO USE SPACY NLTK fonctionne qu'en anglais et est pas fou (dog synonyms de hotdog)
 
 
-def jaccard(s1, s2):
+def jaccard(set1, set2):
     jaccard = sm.Jaccard()
-    return jaccard.get_sim_score(s1, s2)
+    return jaccard.get_sim_score(set1, set2)
 
 
-def monge_elkan(s1, s2):
+def monge_elkan(set1, set2):
     monge_elkan = sm.MongeElkan()
-    monge_elkan.set_sim_func()
-    # RAW SCORE 0 GOOD, 1 BAD
+    # RAW SCORE 1 GOOD, 0 BAD
     # S1 et S2 BAG OF WORD
-    return monge_elkan.get_raw_score(s1, s2)
+    return monge_elkan.get_raw_score(set1, set2)
+
+def compare(s1, s2, threshold, identity=True, levenshteinBool=True, jaroBool=True, ngramBool=False, ngram_size=2, jaccardBool=True, monge_elkanBool=True):
+    result = 0
+    nbMesure = 0
+
+    if monge_elkanBool or jaccardBool:
+        doc1 = nlp(s1)
+        doc2 = nlp(s2)
+        set1 = [token.text for token in doc1]
+        set2 = [token.text for token in doc2]
+
+    if identity:
+        result += identityEqualMeasure(s1, s2)
+        if result:
+            return True
+    if levenshteinBool:
+        result += levenshtein(s1, s2)
+        nbMesure += 1
+    if jaroBool:
+        result += jaro(s1, s2)
+        nbMesure += 1
+    if ngramBool:
+        result += ngram(s1, s2, ngram_size)
+        nbMesure += 1
+    if jaccardBool:
+        result += jaccard(set1, set2)
+        nbMesure += 1
+    if monge_elkanBool:
+        result += monge_elkan(set1, set2)
+        nbMesure += 1
+    #print("Found : " + str(result/nbMesure))
+    return result/nbMesure
 
 
 if __name__ == '__main__':

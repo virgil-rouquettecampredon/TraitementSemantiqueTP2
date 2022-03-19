@@ -1,5 +1,5 @@
 from rdflib import *
-
+from comparison import compare
 
 class F22_Expression:
     def getAllTitles(self, expression):
@@ -153,6 +153,30 @@ class F22_Expression:
                + "\n\tNotes : " + str(self.note) +"\n\tComposer : " + str(self.composer) \
                + "\n\tKey : " + str(self.key) + "\n\tOpus : " + str(self.opus)
 
+    def __getitem__(self, key):
+        return getattr(self, key)
+
+    def compare_type(self, exp2, type, threshold):
+        resultat = []
+        for e1 in self[type]:
+            for e2 in exp2[type]:
+                resultat.append(compare(e1, e2, threshold))
+
+        if len(resultat) > 0:
+            return max(resultat)
+        return 0
+
+
+    def compare(self, exp2, threshold):
+        result = 0
+        result += self.compare_type(exp2, "title", threshold)
+        result += self.compare_type(exp2, "genre", threshold)
+        result += self.compare_type(exp2, "note", threshold)
+        result += self.compare_type(exp2, "composer", threshold)
+        result += self.compare_type(exp2, "key", threshold)
+        result += self.compare_type(exp2, "opus", threshold)
+
+        return result/6
 
 def getAllExpressions(graph):
     print("Lecture d'un fichier ttl : ")
@@ -190,9 +214,13 @@ if __name__ == '__main__':
     i = 0
     y = 0
     for row in result:
-        a = F22_Expression(g1, row[0])
-        print(str(a))
-
-    for row in result2:
-        a = F22_Expression(g2, row[0])
-        print(str(a))
+        exp1 = F22_Expression(g1, row[0])
+        print("OTHER E1: " + str(i))
+        fileFinal.write("OTHER E1: " + str(i))
+        i+= 1
+        y = 0
+        for row2 in result2:
+            exp2 = F22_Expression(g2, row2[0])
+            fileFinal.write("\t E2: " + str(y) + " SEUIL: " + str(exp1.compare(exp2, 0.25)))
+            y += 1
+            #print(exp1.compare(exp2, 0.25))
