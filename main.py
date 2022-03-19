@@ -180,9 +180,15 @@ if __name__ == '__main__':
     g1.parse("./source.ttl")
     g2.parse("./target.ttl")
 
+    fileFinal = "finalFile.txt"
+    fileFinal = open(fileFinal, "w")
+
     result = getAllExpressions(g1)
     result2 = getAllExpressions(g2)
 
+
+    i = 0
+    y = 0
     for row in result:
         a = F22_Expression(g1, row[0])
         print(str(a))
