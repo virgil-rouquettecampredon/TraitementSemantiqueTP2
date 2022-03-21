@@ -1,6 +1,7 @@
 from rdflib import *
 from comparison import compare
 
+
 class F22_Expression:
     def getAllTitles(self, expression):
         req = """
@@ -15,7 +16,7 @@ class F22_Expression:
             }
         """
 
-        qres = self.graph.query(req, initBindings={'expression' : expression})
+        qres = self.graph.query(req, initBindings={'expression': expression})
         result = []
 
         for row in qres:
@@ -59,15 +60,13 @@ class F22_Expression:
                     }
                 """
 
-        qres = self.graph.query(req, initBindings={'expression' : expression})
+        qres = self.graph.query(req, initBindings={'expression': expression})
         result = []
 
         for row in qres:
             result.append(str(row.note))
 
         return result;
-
-
 
     def getAllKey(self, expression):
         req = """
@@ -149,8 +148,9 @@ class F22_Expression:
         self.genre = self.getAllGenres(expression)
 
     def __str__(self):
-        return "Expression : " + str(self.expression) + "\n\tTitle : " + str(self.title) + "\n\tGenre : " + str(self.genre) \
-               + "\n\tNotes : " + str(self.note) +"\n\tComposer : " + str(self.composer) \
+        return "Expression : " + str(self.expression) + "\n\tTitle : " + str(self.title) + "\n\tGenre : " + str(
+            self.genre) \
+               + "\n\tNotes : " + str(self.note) + "\n\tComposer : " + str(self.composer) \
                + "\n\tKey : " + str(self.key) + "\n\tOpus : " + str(self.opus)
 
     def __getitem__(self, key):
@@ -166,7 +166,6 @@ class F22_Expression:
             return max(resultat)
         return 0
 
-
     def compare(self, exp2, threshold):
         result = 0
         result += self.compare_type(exp2, "title", threshold)
@@ -176,7 +175,8 @@ class F22_Expression:
         result += self.compare_type(exp2, "key", threshold)
         result += self.compare_type(exp2, "opus", threshold)
 
-        return result/6
+        return result / 6
+
 
 def getAllExpressions(graph):
     print("Lecture d'un fichier ttl : ")
@@ -198,6 +198,21 @@ def getAllExpressions(graph):
     return qres
 
 
+def writeFile(file1, file2):
+    finalFile = open("finalFile.ttl", "w", encoding="utf-8")
+    f1 = open(file1, "r", encoding="utf-8")
+    f2 = open(file2, "r", encoding="utf-8")
+
+    for lines in f1:
+        finalFile.write(lines)
+    for lines2 in f2:
+        finalFile.write(lines2)
+    return finalFile
+
+def addRelation(entity1, entity2, file):
+    fileFinal = open(file, "a",  encoding="utf-8")
+    fileFinal.write("<" + entity1 + "> " + "owl:SameAs " + "<" + entity2 + ">")
+
 if __name__ == '__main__':
     g1 = Graph()
     g2 = Graph()
@@ -205,22 +220,26 @@ if __name__ == '__main__':
     g2.parse("./target.ttl")
 
     fileFinal = "finalFile.txt"
-    fileFinal = open(fileFinal, "w")
+    fileFinal = open(fileFinal, "w", encoding="utf-8")
 
     result = getAllExpressions(g1)
     result2 = getAllExpressions(g2)
 
+    f1 = "source.ttl"
+    f2 = "target.ttl"
+    writeFile(f2, f1)
 
     i = 0
     y = 0
     for row in result:
         exp1 = F22_Expression(g1, row[0])
         print("OTHER E1: " + str(i))
+        print("EXP1: " + str(exp1))
         fileFinal.write("OTHER E1: " + str(i))
-        i+= 1
+        i += 1
         y = 0
         for row2 in result2:
             exp2 = F22_Expression(g2, row2[0])
             fileFinal.write("\t E2: " + str(y) + " SEUIL: " + str(exp1.compare(exp2, 0.25)))
             y += 1
-            #print(exp1.compare(exp2, 0.25))
+            # print(exp1.compare(exp2, 0.25))

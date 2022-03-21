@@ -56,6 +56,10 @@ def synonymity(s1, s2):
     return 0
     # TODO USE SPACY NLTK fonctionne qu'en anglais et est pas fou (dog synonyms de hotdog)
 
+    #TODO IMPORTANT https://crisco2.unicaen.fr/des/
+
+    #TODO BABEL.NET FOR SYNONYM
+    #Token.similarity
 
 def jaccard(set1, set2):
     jaccard = sm.Jaccard()
