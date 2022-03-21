@@ -203,6 +203,10 @@ def writeFile(file1, file2):
     f1 = open(file1, "r", encoding="utf-8")
     f2 = open(file2, "r", encoding="utf-8")
 
+    #Add prefix at the beginning of the finalFile
+    finalFile.write("@prefix owl: <http://www.w3.org/2002/07/owl#>.\n")
+
+    #Add the content of file to compare
     for lines in f1:
         finalFile.write(lines)
     for lines2 in f2:
@@ -211,7 +215,7 @@ def writeFile(file1, file2):
 
 def addRelation(entity1, entity2, file):
     fileFinal = open(file, "a",  encoding="utf-8")
-    fileFinal.write("<" + entity1 + "> " + "owl:SameAs " + "<" + entity2 + ">")
+    fileFinal.write("<" + entity1 + "> " + "owl:sameAs " + "<" + entity2 + "> .\n")
 
 if __name__ == '__main__':
     g1 = Graph()
@@ -231,15 +235,21 @@ if __name__ == '__main__':
 
     i = 0
     y = 0
+
+    threshold = 0.55
     for row in result:
         exp1 = F22_Expression(g1, row[0])
         print("OTHER E1: " + str(i))
-        print("EXP1: " + str(exp1))
+        print("EXP1: " + str(exp1.expression))
         fileFinal.write("OTHER E1: " + str(i))
         i += 1
         y = 0
+        #TODO ADD PREFIX OWL
         for row2 in result2:
             exp2 = F22_Expression(g2, row2[0])
-            fileFinal.write("\t E2: " + str(y) + " SEUIL: " + str(exp1.compare(exp2, 0.25)))
-            y += 1
+
+            if exp1.compare(exp2, 0.25) > threshold:
+                addRelation(exp1.expression, exp2.expression, "finalFile.ttl")
+            # fileFinal.write("\t E2: " + str(y) + " SEUIL: " + str(exp1.compare(exp2, 0.25)))
+            # y += 1
             # print(exp1.compare(exp2, 0.25))
