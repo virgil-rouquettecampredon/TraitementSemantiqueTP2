@@ -188,7 +188,7 @@ def getAllExpressions(graph):
 
             SELECT DISTINCT ?expression
             WHERE {
-              ?expression a efrbroo:F22_Self-Contained_Expression .
+              ?expression a efrbroo:F22_Self-Contained_Expression ².
             }
             """
 
@@ -239,6 +239,7 @@ if __name__ == '__main__':
     threshold = 0.55
     for row in result:
         exp1 = F22_Expression(g1, row[0])
+        print(exp1)
         print("OTHER E1: " + str(i))
         print("EXP1: " + str(exp1.expression))
         fileFinal.write("OTHER E1: " + str(i))
