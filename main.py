@@ -2,10 +2,7 @@ from rdflib import *
 from comparison import compare
 import spacy
 import time
-
-print("Loading spacy")
-#Remove the exclude if we're using similarity or synonyms
-nlp = spacy.load("fr_core_news_sm", exclude=["parser", "tagger", "ner"])
+import concurrent.futures
 
 class AnalysableText:
     def __init__(self, text):
@@ -229,13 +226,32 @@ def addRelation(entity1, entity2, file):
     fileFinal = open(file, "a",  encoding="utf-8")
     fileFinal.write("<" + entity1 + "> " + "owl:sameAs " + "<" + entity2 + "> .\n")
 
+def threadCompare(exp1, result2, threshold):
+    print("EXP1: " + str(exp1.expression))
+    #TODO ADD PREFIX OWL
+    for exp2 in result2:
+        if exp1.compare_expression(exp2, 0.25) > threshold:
+            addRelation(exp1.expression, exp2.expression, "finalFile.ttl")
+        # fileFinal.write("\t E2: " + str(y) + " SEUIL: " + str(exp1.compare(exp2, 0.25)))
+        # y += 1
+        # print(exp1.compare(exp2, 0.25))
+
+def taskDone(arg):
+    print("A task has finished")
+
 if __name__ == '__main__':
+    print("Loading spacy")
+    #Remove the exclude if we're using similarity or synonyms
+    nlp = spacy.load("fr_core_news_sm", exclude=["parser", "tagger", "ner"])
+
+    global result2
+
     g1 = Graph()
     g2 = Graph()
     g1.parse("./source.ttl")
     g2.parse("./target.ttl")
 
-    fileFinal = "finalFile.txt"
+    fileFinal = "finalFile.ttl"
     fileFinal = open(fileFinal, "w", encoding="utf-8")
 
     print("Starting tokenizer")
@@ -247,7 +263,7 @@ if __name__ == '__main__':
 
     f1 = "source.ttl"
     f2 = "target.ttl"
-    #writeFile(f2, f1)
+    writeFile(f2, f1)
 
     i = 0
     y = 0
@@ -255,19 +271,17 @@ if __name__ == '__main__':
     threshold = 0.55
     print("Starting compare")
     start = time.time()
-    for exp1 in result:
-        print("OTHER E1: " + str(i))
-        print("EXP1: " + str(exp1.expression))
-        fileFinal.write("OTHER E1: " + str(i))
-        i += 1
-        y = 0
-        #TODO ADD PREFIX OWL
-        for exp2 in result2:
-            if exp1.compare_expression(exp2, 0.25) > threshold:
-                addRelation(exp1.expression, exp2.expression, "finalFile.ttl")
-            # fileFinal.write("\t E2: " + str(y) + " SEUIL: " + str(exp1.compare(exp2, 0.25)))
-            # y += 1
-            # print(exp1.compare(exp2, 0.25))
+
+    futures = []
+    with concurrent.futures.ProcessPoolExecutor() as executor:
+        for exp1 in result:
+            future = executor.submit(threadCompare, exp1, result2, threshold)
+            future.add_done_callback(taskDone)
+            futures.append(future)
+        for future in futures:
+            if future.exception() is not None:
+                raise future.exception()
+        # executor.map(threadCompare, result)
 
     end = time.time()
     print("Done in : " + str(round(end-start, 2)) + " seconds")
