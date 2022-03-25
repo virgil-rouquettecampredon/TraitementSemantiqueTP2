@@ -1,9 +1,7 @@
-import nltk
+#import nltk
 import py_stringmatching as sm
-from nltk.corpus import wordnet
-import spacy
+#from nltk.corpus import wordnet
 
-nlp = spacy.load("fr_core_news_sm")
 
 
 def identityEqualMeasure(s1, s2):
@@ -77,23 +75,22 @@ def compare(s1, s2, threshold, identity=True, levenshteinBool=True, jaroBool=Tru
     nbMesure = 0
 
     if monge_elkanBool or jaccardBool:
-        doc1 = nlp(s1)
-        doc2 = nlp(s2)
-        set1 = [token.text for token in doc1]
-        set2 = [token.text for token in doc2]
+        #TODO : Not really a set, word duplication happens
+        set1 = [token.text for token in s1.tokens]
+        set2 = [token.text for token in s2.tokens]
 
     if identity:
-        result += identityEqualMeasure(s1, s2)
+        result += identityEqualMeasure(s1.text, s2.text)
         if result:
             return True
     if levenshteinBool:
-        result += levenshtein(s1, s2)
+        result += levenshtein(s1.text, s2.text)
         nbMesure += 1
     if jaroBool:
-        result += jaro(s1, s2)
+        result += jaro(s1.text, s2.text)
         nbMesure += 1
     if ngramBool:
-        result += ngram(s1, s2, ngram_size)
+        result += ngram(s1.text, s2.text, ngram_size)
         nbMesure += 1
     if jaccardBool:
         result += jaccard(set1, set2)

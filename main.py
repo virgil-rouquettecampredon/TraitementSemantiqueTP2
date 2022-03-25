@@ -1,6 +1,19 @@
 from rdflib import *
 from comparison import compare
+import spacy
+import time
 
+print("Loading spacy")
+#Remove the exclude if we're using similarity or synonyms
+nlp = spacy.load("fr_core_news_sm", exclude=["parser", "tagger", "ner"])
+
+class AnalysableText:
+    def __init__(self, text):
+        self.text = text
+        self.tokens = nlp(text)
+
+    def __str__(self):
+        return "Analyse Text : " + str(self.text)
 
 class F22_Expression:
     def getAllTitles(self, expression):
@@ -36,7 +49,7 @@ class F22_Expression:
                       ?expression mus:U12_has_genre ?genre .
                       FILTER (isIRI(?genre))
                     }
-                    
+
                 """
 
         qres = self.graph.query(req, initBindings={'expression': expression})
@@ -100,7 +113,7 @@ class F22_Expression:
                     SELECT ?expression ?opus
                     WHERE {
                       ?expression mus:U17_has_opus_statement / mus:U42_has_opus_number ?opus .
-                      
+
                     }
                 """
 
@@ -140,15 +153,15 @@ class F22_Expression:
         self.graph = graph
 
         self.expression = expression
-        self.title = self.getAllTitles(expression)
-        self.note = self.getAllNotes(expression)
-        self.composer = self.getAllComposer(expression)
-        self.key = self.getAllKey(expression)
-        self.opus = self.getAllOpus(expression)
-        self.genre = self.getAllGenres(expression)
+        self.title = [AnalysableText(text) for text in self.getAllTitles(expression)]
+        self.note = [AnalysableText(text) for text in self.getAllNotes(expression)]
+        self.composer = [AnalysableText(text) for text in self.getAllComposer(expression)]
+        self.key = [AnalysableText(text) for text in self.getAllKey(expression)]
+        self.opus = [AnalysableText(text) for text in self.getAllOpus(expression)]
+        self.genre = [AnalysableText(text) for text in self.getAllGenres(expression)]
 
     def __str__(self):
-        return "Expression : " + str(self.expression) + "\n\tTitle : " + str(self.title) + "\n\tGenre : " + str(
+        return "Expression : " + str(self.expression) + "\n\tTitle : " + str(self["title"]) + "\n\tGenre : " + str(
             self.genre) \
                + "\n\tNotes : " + str(self.note) + "\n\tComposer : " + str(self.composer) \
                + "\n\tKey : " + str(self.key) + "\n\tOpus : " + str(self.opus)
@@ -166,7 +179,7 @@ class F22_Expression:
             return max(resultat)
         return 0
 
-    def compare(self, exp2, threshold):
+    def compare_expression(self, exp2, threshold):
         result = 0
         result += self.compare_type(exp2, "title", threshold)
         result += self.compare_type(exp2, "genre", threshold)
@@ -179,7 +192,6 @@ class F22_Expression:
 
 
 def getAllExpressions(graph):
-    print("Lecture d'un fichier ttl : ")
     req = """
             PREFIX mus: <http://data.doremus.org/ontology#>
             PREFIX ecrm: <http://erlangen-crm.org/current/>
@@ -188,12 +200,12 @@ def getAllExpressions(graph):
 
             SELECT DISTINCT ?expression
             WHERE {
-              ?expression a efrbroo:F22_Self-Contained_Expression ².
+              ?expression a efrbroo:F22_Self-Contained_Expression .
             }
             """
 
     qres = graph.query(req)
-    print(str(len(qres)))
+    print("Lecture d'un fichier ttl : " + str(len(qres)) + " entrées")
 
     return qres
 
@@ -226,31 +238,36 @@ if __name__ == '__main__':
     fileFinal = "finalFile.txt"
     fileFinal = open(fileFinal, "w", encoding="utf-8")
 
-    result = getAllExpressions(g1)
-    result2 = getAllExpressions(g2)
+    print("Starting tokenizer")
+    start = time.time()
+    result = [F22_Expression(g1, expression[0]) for expression in getAllExpressions(g1)]
+    result2 = [F22_Expression(g2, expression[0]) for expression in getAllExpressions(g2)]
+    end = time.time()
+    print("Done in : " + str(round(end-start, 2)) + " seconds")
 
     f1 = "source.ttl"
     f2 = "target.ttl"
-    writeFile(f2, f1)
+    #writeFile(f2, f1)
 
     i = 0
     y = 0
 
     threshold = 0.55
-    for row in result:
-        exp1 = F22_Expression(g1, row[0])
-        print(exp1)
+    print("Starting compare")
+    start = time.time()
+    for exp1 in result:
         print("OTHER E1: " + str(i))
         print("EXP1: " + str(exp1.expression))
         fileFinal.write("OTHER E1: " + str(i))
         i += 1
         y = 0
         #TODO ADD PREFIX OWL
-        for row2 in result2:
-            exp2 = F22_Expression(g2, row2[0])
-
-            if exp1.compare(exp2, 0.25) > threshold:
+        for exp2 in result2:
+            if exp1.compare_expression(exp2, 0.25) > threshold:
                 addRelation(exp1.expression, exp2.expression, "finalFile.ttl")
             # fileFinal.write("\t E2: " + str(y) + " SEUIL: " + str(exp1.compare(exp2, 0.25)))
             # y += 1
             # print(exp1.compare(exp2, 0.25))
+
+    end = time.time()
+    print("Done in : " + str(round(end-start, 2)) + " seconds")
