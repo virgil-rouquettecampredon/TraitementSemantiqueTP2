@@ -185,24 +185,24 @@ class F22_Expression:
     def __getitem__(self, key):
         return getattr(self, key)
 
-    def compare_type(self, exp2, type, threshold):
+    def compare_type(self, exp2, type):
         resultat = []
         for e1 in self[type]:
             for e2 in exp2[type]:
-                resultat.append(compare(e1, e2, threshold))
+                resultat.append(compare(e1, e2))
 
         if len(resultat) > 0:
             return max(resultat)
         return 0
 
-    def compare_expression(self, exp2, threshold):
+    def compare_expression(self, exp2):
         result = 0
-        result += self.compare_type(exp2, "title", threshold)
-        result += self.compare_type(exp2, "genre", threshold)
-        result += self.compare_type(exp2, "note", threshold)
-        result += self.compare_type(exp2, "composer", threshold)
-        result += self.compare_type(exp2, "key", threshold)
-        result += self.compare_type(exp2, "opus", threshold)
+        result += self.compare_type(exp2, "title")
+        result += self.compare_type(exp2, "genre")
+        result += self.compare_type(exp2, "note")
+        result += self.compare_type(exp2, "composer")
+        result += self.compare_type(exp2, "key")
+        result += self.compare_type(exp2, "opus")
 
         return result / 6
 
@@ -249,7 +249,7 @@ def threadCompare(exp1, result2, threshold):
     print("EXP1: " + str(exp1.expression))
     #TODO ADD PREFIX OWL
     for exp2 in result2:
-        if exp1.compare_expression(exp2, 0.25) > threshold:
+        if exp1.compare_expression(exp2) > threshold:
             addRelation(exp1.expression, exp2.expression, "finalFile.ttl")
         # fileFinal.write("\t E2: " + str(y) + " SEUIL: " + str(exp1.compare(exp2, 0.25)))
         # y += 1
@@ -283,9 +283,6 @@ if __name__ == '__main__':
     f1 = "source.ttl"
     f2 = "target.ttl"
     writeFile(f2, f1)
-
-    i = 0
-    y = 0
 
     threshold = 0.55
     print("Starting compare")

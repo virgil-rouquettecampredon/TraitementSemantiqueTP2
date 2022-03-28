@@ -70,14 +70,14 @@ def monge_elkan(set1, set2):
     # S1 et S2 BAG OF WORD
     return monge_elkan.get_raw_score(set1, set2)
 
-def compare(s1, s2, threshold, identity=True, levenshteinBool=True, jaroBool=True, ngramBool=False, ngram_size=2, jaccardBool=True, monge_elkanBool=True):
+def compare(s1, s2, identity=True, levenshteinBool=True, jaroBool=True, ngramBool=False, ngram_size=2, jaccardBool=True, monge_elkanBool=True):
     result = 0
     nbMesure = 0
 
     if monge_elkanBool or jaccardBool:
         #TODO : Not really a set, word duplication happens
-        set1 = [token.text for token in s1.tokens]
-        set2 = [token.text for token in s2.tokens]
+        set1 = s1.tokens
+        set2 = s2.tokens
 
     if identity:
         result += identityEqualMeasure(s1.text, s2.text)
