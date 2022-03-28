@@ -41,7 +41,7 @@ class F22_Expression:
                     PREFIX efrbroo: <http://erlangen-crm.org/efrbroo/>
                     PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 
-                    SELECT ?genre
+                    SELECT ?expression ?genre
                     WHERE {
                       ?expression mus:U12_has_genre ?genre .
                       FILTER (isIRI(?genre))
@@ -52,7 +52,25 @@ class F22_Expression:
         qres = self.graph.query(req, initBindings={'expression': expression})
         result = []
 
+        req2 = """
+                    PREFIX mus: <http://data.doremus.org/ontology#>
+                    PREFIX ecrm: <http://erlangen-crm.org/current/>
+                    PREFIX efrbroo: <http://erlangen-crm.org/efrbroo/>
+                    PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+
+                    SELECT ?expression ?genre
+                    WHERE {
+                      ?expression mus:U12_has_genre / ecrm:P1_is_identified_by ?genre .
+                    }
+
+                """
+
+        qres2 = self.graph.query(req2, initBindings={'expression': expression})
+
         for row in qres:
+            result.append(str(row.genre).split("/")[-1].replace("_", " "))
+
+        for row in qres2:
             result.append(str(row.genre))
 
         return result;
@@ -122,6 +140,7 @@ class F22_Expression:
 
         return result;
 
+    #Can only return IRIs, so we use identity equals only
     def getAllComposer(self, expression):
         req = """
                     PREFIX mus: <http://data.doremus.org/ontology#>
@@ -236,8 +255,8 @@ def threadCompare(exp1, result2, threshold):
         # y += 1
         # print(exp1.compare(exp2, 0.25))
 
-def taskDone(arg):
-    print("A task has finished")
+# def taskDone(arg):
+#     print("A task has finished")
 
 if __name__ == '__main__':
     print("Loading spacy")
@@ -276,7 +295,7 @@ if __name__ == '__main__':
     with concurrent.futures.ProcessPoolExecutor() as executor:
         for exp1 in result:
             future = executor.submit(threadCompare, exp1, result2, threshold)
-            future.add_done_callback(taskDone)
+            # future.add_done_callback(taskDone)
             futures.append(future)
         for future in futures:
             if future.exception() is not None:
