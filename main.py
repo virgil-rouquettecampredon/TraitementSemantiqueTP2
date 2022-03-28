@@ -249,6 +249,10 @@ def writeFile(file1, file2):
         finalFile.write(lines2)
     return finalFile
 
+def addLineCsv(value):
+    finalCsv = open("result.csv", "a", encoding="utf-8")
+    finalCsv.write(str(value) + "\n")
+
 def addRelation(entity1, entity2, file):
     fileFinal = open(file, "a",  encoding="utf-8")
     fileFinal.write("<" + entity1 + "> " + "owl:sameAs " + "<" + entity2 + "> .\n")
@@ -257,7 +261,9 @@ def threadCompare(exp1, result2, threshold, title, genre, note, composer, key, o
     print("EXP1: " + str(exp1.expression))
     #TODO ADD PREFIX OWL
     for exp2 in result2:
-        if exp1.compare_expression(exp2, title, genre, note, composer, key, opus, identity, levenshteinBool, jaroBool, ngramBool, ngram_size, jaccardBool, monge_elkanBool) > threshold:
+        value = exp1.compare_expression(exp2, title, genre, note, composer, key, opus, identity, levenshteinBool, jaroBool, ngramBool, ngram_size, jaccardBool, monge_elkanBool)
+        addLineCsv(value)
+        if value > threshold:
             addRelation(exp1.expression, exp2.expression, "finalFile.ttl")
         # fileFinal.write("\t E2: " + str(y) + " SEUIL: " + str(exp1.compare(exp2, 0.25)))
         # y += 1
@@ -284,6 +290,7 @@ def main(threshold=0.5, title=True, genre=True, note=True, composer=True, key=Tr
 
     fileFinal = "finalFile.ttl"
     fileFinal = open(fileFinal, "w", encoding="utf-8")
+    open("result.csv", "w", encoding="utf-8")
 
     print("Starting tokenizer")
     start = time.time()
