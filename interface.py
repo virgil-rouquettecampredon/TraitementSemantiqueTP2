@@ -70,19 +70,17 @@ if __name__ == '__main__':
 
     def applied():
         print("Appliquer")
-        if jaro.get():
-            jaroValue = float(jaroInput.get())
-        if identity.get():
-            identityValue = float(identityInput.get())
-        if levenshtein.get():
-            levenshteinValue = float(levenshteinInput.get())
+        jaroValue = float(jaroInput.get()) if jaro.get() else 0
+        identityValue = float(identityInput.get()) if identity.get() else 0
+        levenshteinValue = float(levenshteinInput.get()) if levenshtein.get() else 0
         if ngram.get():
             ngramValue = float(ngramInput.get())
             ngramSizeValue = int(sizeInput.get())
-        if jaccard.get():
-            jacardValue = float(jaccardInput.get())
-        if monge_elkan.get():
-            monge_elkanValue = float(monge_elkanInput.get())
+        else:
+            ngramValue = 0
+            ngramSizeValue = int(sizeInput.get())
+        jacardValue = float(jaccardInput.get()) if jaccard.get() else 0
+        monge_elkanValue = float(monge_elkanInput.get()) if monge_elkan.get() else 0
 
         main(threshold=float(e1.get()), title=title.get(), genre=genre.get(), note=notes.get(), composer=composer.get(), key=key.get(), opus=opus.get(), identity=identityValue, levenshteinBool=levenshteinValue, jaroBool=jaroValue, ngramBool=ngramValue, ngram_size=ngramSizeValue, jaccardBool=jacardValue, monge_elkanBool=monge_elkanValue)
 
