@@ -185,26 +185,34 @@ class F22_Expression:
     def __getitem__(self, key):
         return getattr(self, key)
 
-    def compare_type(self, exp2, type):
+    def compare_type(self, exp2, type, identity=1, levenshteinBool=0, jaroBool=0, ngramBool=0, ngram_size=2, jaccardBool=0, monge_elkanBool=0):
         resultat = []
         for e1 in self[type]:
             for e2 in exp2[type]:
-                resultat.append(compare(e1, e2))
+                resultat.append(compare(e1, e2, identity=identity, levenshteinBool=levenshteinBool, jaroBool=jaroBool, ngramBool=ngramBool, ngram_size=ngram_size, jaccardBool=jaccardBool, monge_elkanBool=monge_elkanBool))
 
         if len(resultat) > 0:
             return max(resultat)
         return 0
 
-    def compare_expression(self, exp2):
+    def compare_expression(self, exp2, title=True, genre=True, note=True, composer=True, key=True, opus=True, identity=1, levenshteinBool=1, jaroBool=1, ngramBool=1, ngram_size=2, jaccardBool=1, monge_elkanBool=1):
         result = 0
-        result += self.compare_type(exp2, "title")
-        result += self.compare_type(exp2, "genre")
-        result += self.compare_type(exp2, "note")
-        result += self.compare_type(exp2, "composer")
-        result += self.compare_type(exp2, "key")
-        result += self.compare_type(exp2, "opus")
+        nbAttributes = title + genre + note + composer + key + opus
 
-        return result / 6
+        if title:
+            result += self.compare_type(exp2, "title", identity=identity, levenshteinBool=levenshteinBool, jaroBool=jaroBool, ngramBool=ngramBool, ngram_size=ngram_size, jaccardBool=jaccardBool, monge_elkanBool=monge_elkanBool)
+        if genre:
+            result += self.compare_type(exp2, "genre", identity=identity, levenshteinBool=levenshteinBool, jaroBool=jaroBool, ngramBool=ngramBool, ngram_size=ngram_size, jaccardBool=jaccardBool, monge_elkanBool=monge_elkanBool)
+        if note:
+            result += self.compare_type(exp2, "note", identity=identity, levenshteinBool=levenshteinBool, jaroBool=jaroBool, ngramBool=ngramBool, ngram_size=ngram_size, jaccardBool=jaccardBool, monge_elkanBool=monge_elkanBool)
+        if composer:
+            result += self.compare_type(exp2, "composer", identity=True)
+        if key:
+            result += self.compare_type(exp2, "key", identity=identity, levenshteinBool=levenshteinBool, jaroBool=jaroBool, ngramBool=ngramBool, ngram_size=ngram_size, jaccardBool=jaccardBool, monge_elkanBool=monge_elkanBool)
+        if opus:
+            result += self.compare_type(exp2, "opus", identity=identity, levenshteinBool=levenshteinBool, jaroBool=jaroBool, ngramBool=ngramBool, ngram_size=ngram_size, jaccardBool=jaccardBool, monge_elkanBool=monge_elkanBool)
+
+        return result / nbAttributes
 
 
 def getAllExpressions(graph):
@@ -245,22 +253,26 @@ def addRelation(entity1, entity2, file):
     fileFinal = open(file, "a",  encoding="utf-8")
     fileFinal.write("<" + entity1 + "> " + "owl:sameAs " + "<" + entity2 + "> .\n")
 
-def threadCompare(exp1, result2, threshold):
+def threadCompare(exp1, result2, threshold, title, genre, note, composer, key, opus, identity, levenshteinBool, jaroBool, ngramBool, ngram_size, jaccardBool, monge_elkanBool):
     print("EXP1: " + str(exp1.expression))
     #TODO ADD PREFIX OWL
     for exp2 in result2:
-        if exp1.compare_expression(exp2) > threshold:
+        if exp1.compare_expression(exp2, title, genre, note, composer, key, opus, identity, levenshteinBool, jaroBool, ngramBool, ngram_size, jaccardBool, monge_elkanBool) > threshold:
             addRelation(exp1.expression, exp2.expression, "finalFile.ttl")
         # fileFinal.write("\t E2: " + str(y) + " SEUIL: " + str(exp1.compare(exp2, 0.25)))
         # y += 1
         # print(exp1.compare(exp2, 0.25))
 
-# def taskDone(arg):
-#     print("A task has finished")
+def taskDone(arg):
+     print("A task has finished")
+     if(arg.exception() is not None):
+         raise arg.exception()
+         exit(1)
 
-if __name__ == '__main__':
+def main(threshold=0.5, title=True, genre=True, note=True, composer=True, key=True, opus=True, identity=1, levenshteinBool=1, jaroBool=1, ngramBool=1, ngram_size=2, jaccardBool=1, monge_elkanBool=1):
     print("Loading spacy")
     #Remove the exclude if we're using similarity or synonyms
+    global nlp
     nlp = spacy.load("fr_core_news_sm", exclude=["parser", "tagger", "ner"])
 
     global result2
@@ -280,18 +292,13 @@ if __name__ == '__main__':
     end = time.time()
     print("Done in : " + str(round(end-start, 2)) + " seconds")
 
-    f1 = "source.ttl"
-    f2 = "target.ttl"
-    writeFile(f2, f1)
-
-    threshold = 0.55
     print("Starting compare")
     start = time.time()
 
     futures = []
     with concurrent.futures.ProcessPoolExecutor() as executor:
         for exp1 in result:
-            future = executor.submit(threadCompare, exp1, result2, threshold)
+            future = executor.submit(threadCompare, exp1, result2, threshold, title, genre, note, composer, key, opus, identity, levenshteinBool, jaroBool, ngramBool, ngram_size, jaccardBool, monge_elkanBool)
             # future.add_done_callback(taskDone)
             futures.append(future)
         for future in futures:
@@ -301,3 +308,7 @@ if __name__ == '__main__':
 
     end = time.time()
     print("Done in : " + str(round(end-start, 2)) + " seconds")
+
+
+if __name__ == '__main__':
+    main()

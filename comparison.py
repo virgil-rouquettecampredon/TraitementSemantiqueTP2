@@ -26,7 +26,6 @@ def smoa(s1, s2):
 
 def ngram(s1, s2, size):
     # TODO A TESTER
-
     # http://anhaidgroup.github.io/py_stringmatching/v0.4.x/QgramTokenizer.html?highlight=ngram
     i = 0
     same = 0
@@ -37,6 +36,8 @@ def ngram(s1, s2, size):
         i += 1
 
     # The closer to 1, the better
+    if((min(len(s2), len(s1)) - size + 1) == 0):
+        return 0
     return (same) / (min(len(s2), len(s1)) - size + 1)
 
 
@@ -70,35 +71,37 @@ def monge_elkan(set1, set2):
     # S1 et S2 BAG OF WORD
     return monge_elkan.get_raw_score(set1, set2)
 
-def compare(s1, s2, identity=True, levenshteinBool=True, jaroBool=True, ngramBool=False, ngram_size=2, jaccardBool=True, monge_elkanBool=True):
+def compare(s1, s2, identity=1, levenshteinBool=1, jaroBool=1, ngramBool=1, ngram_size=2, jaccardBool=1, monge_elkanBool=1):
     result = 0
     nbMesure = 0
 
     if monge_elkanBool or jaccardBool:
         #TODO : Not really a set, word duplication happens
-        set1 = s1.tokens
-        set2 = s2.tokens
+        set1 = [token.text for token in s1.tokens]
+        set2 = [token.text for token in s2.tokens]
 
     if identity:
         result += identityEqualMeasure(s1.text, s2.text)
         if result:
             return True
     if levenshteinBool:
-        result += levenshtein(s1.text, s2.text)
-        nbMesure += 1
+        result += levenshtein(s1.text, s2.text)*levenshteinBool
+        nbMesure += levenshteinBool
     if jaroBool:
-        result += jaro(s1.text, s2.text)
-        nbMesure += 1
+        result += jaro(s1.text, s2.text)*jaroBool
+        nbMesure += jaroBool
     if ngramBool:
-        result += ngram(s1.text, s2.text, ngram_size)
-        nbMesure += 1
+        result += ngram(s1.text, s2.text, ngram_size)*ngramBool
+        nbMesure += ngramBool
     if jaccardBool:
-        result += jaccard(set1, set2)
-        nbMesure += 1
+        result += jaccard(set1, set2)*jaccardBool
+        nbMesure += jaccardBool
     if monge_elkanBool:
-        result += monge_elkan(set1, set2)
-        nbMesure += 1
+        result += monge_elkan(set1, set2)*monge_elkanBool
+        nbMesure += monge_elkanBool
     #print("Found : " + str(result/nbMesure))
+    if(nbMesure==0):
+        return 0
     return result/nbMesure
 
 
